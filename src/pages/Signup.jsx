@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import io from "socket.io-client";
+import PropTypes from "prop-types";
 
-const socket = io("localhost:3000");
-
-function Signin() {
+function Signin({ socket }) {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -21,12 +19,7 @@ function Signin() {
   };
 
   const handleSubmit = () => {
-    socket.emit("formData", formData);
-    setFormData({
-      username: "",
-      email: "",
-      password: "",
-    });
+    socket.emit("registerUser", formData);
   };
 
   useEffect(() => {
@@ -40,23 +33,32 @@ function Signin() {
       console.log("USER CREATED", user);
     });
 
+    socket.on("validationError", (err) => {
+      console.log("validation error:", err);
+    });
+
+    socket.on("usersFetchError", (error) => {
+      console.log("Error fetching users:", error.error);
+    });
+
     socket.on("userCreationError", (error) => {
-      console.error("Error creating user:", error.error);
+      console.log("Error creating user:", error.error);
     });
 
     return () => {
       // Clean up event listeners when component unmounts
-
       socket.off("allUsers");
       socket.off("userCreated");
       socket.off("userCreationError");
       socket.off("requestAllUsers");
+      socket.off("validationError");
+      socket.off("usersFetchError");
     };
   }, []);
 
   return (
     <>
-      <h1>Grouple</h1>
+      <h1>Register</h1>
       <div
         style={{
           display: "flex",
@@ -113,5 +115,9 @@ function Signin() {
     </>
   );
 }
+
+Signin.propTypes = {
+  socket: PropTypes.object.isRequired,
+};
 
 export default Signin;
